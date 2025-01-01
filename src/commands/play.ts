@@ -1,3 +1,4 @@
+import { Args, Command } from "@models/command.model";
 import config from "@utils/config";
 import { checkForVoice, findBestMatch } from "@utils/utils";
 import {
@@ -10,7 +11,6 @@ import {
 } from "discord-player";
 import { Message } from "discord.js";
 import fs from "fs";
-import { Args, Command } from "models/command.model";
 import path from "path";
 
 // @TODO: Refactor this to not have the additionalArgs parameter. Also possibly separate the file search into a new command.

@@ -1,9 +1,9 @@
+import { Command } from "@models/command.model";
 import config from "@utils/config";
 import { Player } from "discord-player";
 import { YoutubeiExtractor } from "discord-player-youtubei";
 import { Client, ClientOptions, Collection, Events } from "discord.js";
 import fs from "fs";
-import { Command } from "models/command.model";
 import path from "path";
 
 export class DiscordClient extends Client {

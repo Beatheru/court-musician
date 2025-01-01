@@ -1,8 +1,8 @@
+import { Command } from "@models/command.model";
 import config from "@utils/config";
 import { Message } from "discord.js";
 import download from "download";
 import fs from "fs";
-import { Command } from "models/command.model";
 import path from "path";
 
 const extensions = [".mp3", "mp4", ".webm", ".ogg"];
