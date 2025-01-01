@@ -26,6 +26,10 @@ const command: Command = {
     }
 
     if (tracks.length === 0) {
+      if (message.channel.isSendable()) {
+        message.channel.send({ embeds: [embed] });
+      }
+
       return;
     }
 
