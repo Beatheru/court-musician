@@ -1,0 +1,15 @@
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# IDE
+.vscode/
+
+# Project files
+node_modules/
+dist/
+uploads/
