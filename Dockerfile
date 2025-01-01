@@ -22,4 +22,4 @@ COPY . .
 
 RUN pnpm build
 
-CMD ["pnpm", "dev"]
+CMD ["pnpm", "start"]

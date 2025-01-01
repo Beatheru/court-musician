@@ -1,7 +1,7 @@
 import { Command } from "@models/command.model";
 import config from "@utils/config";
 import { EmbedBuilder, Message } from "discord.js";
-import { client } from "index";
+import { client } from "../index";
 
 const command: Command = {
   name: "help",
