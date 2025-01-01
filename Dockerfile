@@ -9,8 +9,8 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
-# Install nodemon
-RUN pnpm install -g nodemon
+# Install pm2
+RUN pnpm install -g pm2
 
 WORKDIR /app
 
@@ -22,4 +22,4 @@ COPY . .
 
 RUN pnpm build
 
-CMD ["pnpm", "start"]
+CMD ["pm2-runtime", "dist/index.js"]
