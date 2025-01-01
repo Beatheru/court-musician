@@ -55,6 +55,8 @@ export class DiscordClient extends Client {
     // Command handler for messages.
     this.on(Events.MessageCreate, async (message) => {
       if (message.content.startsWith(config.prefix)) {
+        console.log(message.content);
+
         const commandName = message.content
           .split(/\s+/)[0]
           .toLowerCase()
@@ -71,11 +73,15 @@ export class DiscordClient extends Client {
 
         // Delete the message if it is not an upload command.
         // Upload message needs to be kept in order to download the file.
-        if (command.name !== "upload") {
-          message.delete();
-        }
+        try {
+          if (command.name !== "upload") {
+            message.delete();
+          }
 
-        await command.run(message);
+          await command.run(message);
+        } catch (error) {
+          console.log(error);
+        }
       }
     });
   }
