@@ -1,19 +1,22 @@
 import { Command } from "@models/command.model";
-import config from "@utils/config";
 import { checkForVoice } from "@utils/utils";
 import { useQueue } from "discord-player";
-import { Message } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-const command: Command = {
-  name: "skip",
-  description: "Skip the current song.",
-  usage: `${config.prefix}skip`,
-  async run(message: Message) {
-    if (!checkForVoice(message)) return;
+export default {
+  data: new SlashCommandBuilder()
+    .setName("skip")
+    .setDescription("Skip the current song."),
 
-    const queue = useQueue(message.guild!.id);
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
+
+    const queue = useQueue(interaction.guild!.id);
     queue?.node.skip();
-  }
-};
 
-export default command;
+    await interaction.deferReply({
+      ephemeral: true
+    });
+    await interaction.deleteReply();
+  }
+} as Command;

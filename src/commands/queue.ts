@@ -1,17 +1,21 @@
-import { EmbedBuilder, Message } from "discord.js";
-import { useQueue } from "discord-player";
 import { Command } from "@models/command.model";
-import config from "@utils/config";
 import { checkForVoice } from "@utils/utils";
+import { useQueue } from "discord-player";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  SlashCommandBuilder
+} from "discord.js";
 
-const command: Command = {
-  name: "queue",
-  description: "Shows the current queue (up to 15 tracks).",
-  usage: `${config.prefix}queue`,
-  async run(message: Message) {
-    if (!checkForVoice(message)) return;
+// @TODO: Reimplement this.
+export default {
+  data: new SlashCommandBuilder()
+    .setName("queue")
+    .setDescription("Shows the current queue (up to 15 tracks for now)."),
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
 
-    const queue = useQueue(message.guild!.id);
+    const queue = useQueue(interaction.guild!.id);
     if (!queue) return;
 
     const embed = new EmbedBuilder();
@@ -26,8 +30,8 @@ const command: Command = {
     }
 
     if (tracks.length === 0) {
-      if (message.channel.isSendable()) {
-        message.channel.send({ embeds: [embed] });
+      if (interaction.channel?.isSendable()) {
+        interaction.channel.send({ embeds: [embed] });
       }
 
       return;
@@ -51,10 +55,8 @@ const command: Command = {
       }
     }
 
-    if (message.channel.isSendable()) {
-      message.channel.send({ embeds: [embed] });
+    if (interaction.channel?.isSendable()) {
+      interaction.channel.send({ embeds: [embed] });
     }
   }
-};
-
-export default command;
+} as Command;

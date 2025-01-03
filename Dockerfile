@@ -22,4 +22,6 @@ COPY . .
 
 RUN pnpm build
 
+RUN pnpm commands
+
 CMD ["pm2-runtime", "dist/index.js"]

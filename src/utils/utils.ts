@@ -1,17 +1,18 @@
-import { Message } from "discord.js";
+import { GuildMember, Interaction } from "discord.js";
 
 /**
  * Helper function to check if a user is in a voice channel.
  * @param message Message that the user sent in a text channel.
  * @returns True if the user is in a voice channel, false otherwise.
  */
-export function checkForVoice(message: Message): boolean {
-  const voiceChannel = message.member?.voice.channel;
+export function checkForVoice(interaction: Interaction): boolean {
+  const voiceChannel = (interaction.member as GuildMember).voice.channel;
   if (!voiceChannel) {
-    if (message.channel.isSendable()) {
-      message.channel.send(
-        "You must be in a voice channel to use this command!"
-      );
+    if (interaction.isRepliable()) {
+      interaction.reply({
+        content: "You must be in a voice channel to use this command!",
+        ephemeral: true
+      });
     }
 
     return false;

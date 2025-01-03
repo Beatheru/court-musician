@@ -2,7 +2,13 @@ import { Command } from "@models/command.model";
 import config from "@utils/config";
 import { Player } from "discord-player";
 import { YoutubeiExtractor } from "discord-player-youtubei";
-import { Client, ClientOptions, Collection, Events } from "discord.js";
+import {
+  Client,
+  ClientOptions,
+  Collection,
+  Events,
+  MessageFlags
+} from "discord.js";
 import fs from "fs";
 import path from "path";
 
@@ -42,7 +48,7 @@ export class DiscordClient extends Client {
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
       const command = await import(filePath);
-      this.commands.set(command.default.name, command.default);
+      this.commands.set(command.default.data.name, command.default);
     }
   }
 
@@ -53,34 +59,36 @@ export class DiscordClient extends Client {
     });
 
     // Command handler for messages.
-    this.on(Events.MessageCreate, async (message) => {
-      if (message.content.startsWith(config.prefix)) {
-        console.log(message.content);
+    this.on(Events.InteractionCreate, async (interaction) => {
+      if (!interaction.isChatInputCommand()) return;
 
-        const commandName = message.content
-          .split(/\s+/)[0]
-          .toLowerCase()
-          .substring(1);
+      console.log("Command:", interaction.commandName);
+      const command = this.commands.get(interaction.commandName);
 
-        const command = this.commands.get(commandName);
-        if (!command) {
-          message.channel.send(
-            `No command matching "${commandName}" was found.`
-          );
+      if (!command) {
+        interaction.reply({
+          content: `No command matching ${interaction.commandName} was found.`,
+          flags: MessageFlags.Ephemeral
+        });
 
-          return;
-        }
+        return;
+      }
 
-        // Delete the message if it is not an upload command.
-        // Upload message needs to be kept in order to download the file.
-        try {
-          if (command.name !== "upload") {
-            message.delete();
-          }
+      try {
+        await command.run(interaction);
+      } catch (error) {
+        console.error(error);
 
-          await command.run(message);
-        } catch (error) {
-          console.log(error);
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({
+            content: "There was an error while executing this command!",
+            flags: MessageFlags.Ephemeral
+          });
+        } else {
+          await interaction.reply({
+            content: "There was an error while executing this command!",
+            flags: MessageFlags.Ephemeral
+          });
         }
       }
     });

@@ -1,20 +1,24 @@
 import { Command } from "@models/command.model";
-import config from "@utils/config";
 import { checkForVoice } from "@utils/utils";
 import { useQueue } from "discord-player";
-import { Message } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-const command: Command = {
-  name: "shuffle",
-  description: "Shuffles the queue.",
-  usage: `${config.prefix}shuffle`,
-  async run(message: Message) {
-    if (!checkForVoice(message)) return;
+export default {
+  data: new SlashCommandBuilder()
+    .setName("shuffle")
+    .setDescription("Shuffles the queue."),
 
-    const queue = useQueue(message.guild!.id);
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
+
+    const queue = useQueue(interaction.guild!.id);
     if (!queue) return;
-    queue.tracks.shuffle();
-  }
-};
 
-export default command;
+    queue.tracks.shuffle();
+
+    await interaction.deferReply({
+      ephemeral: true
+    });
+    await interaction.deleteReply();
+  }
+} as Command;

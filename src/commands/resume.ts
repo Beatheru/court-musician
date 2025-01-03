@@ -1,20 +1,24 @@
 import { Command } from "@models/command.model";
-import config from "@utils/config";
 import { checkForVoice } from "@utils/utils";
 import { useQueue } from "discord-player";
-import { Message } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-const command: Command = {
-  name: "resume",
-  description: "Resumes the bot.",
-  usage: `${config.prefix}resume`,
-  async run(message: Message) {
-    if (!checkForVoice(message)) return;
+export default {
+  data: new SlashCommandBuilder()
+    .setName("resume")
+    .setDescription("Resumes the bot."),
 
-    const queue = useQueue(message.guild!.id);
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
+
+    const queue = useQueue(interaction.guild!.id);
     if (!queue) return;
-    queue.node.setPaused(false);
-  }
-};
 
-export default command;
+    queue.node.setPaused(false);
+
+    await interaction.deferReply({
+      ephemeral: true
+    });
+    await interaction.deleteReply();
+  }
+} as Command;

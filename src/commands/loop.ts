@@ -1,20 +1,31 @@
 import { Command } from "@models/command.model";
-import config from "@utils/config";
 import { checkForVoice } from "@utils/utils";
 import { QueueRepeatMode, useQueue } from "discord-player";
-import { Message } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
-const command: Command = {
-  name: "loop",
-  description: "Set the bot to loop the current song, the queue, or none.",
-  usage: `${config.prefix}loop <none | track | queue>`,
-  async run(message: Message) {
-    if (!checkForVoice(message)) return;
+export default {
+  data: new SlashCommandBuilder()
+    .setName("loop")
+    .setDescription("Set the bot to loop the current song, the queue, or none.")
+    .addStringOption((option) =>
+      option
+        .setName("type")
+        .setDescription("Loop type.")
+        .addChoices(
+          { name: "none", value: "none" },
+          { name: "track", value: "track" },
+          { name: "queue", value: "queue" }
+        )
+        .setRequired(true)
+    ),
 
-    const queue = useQueue(message.guild!.id);
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
+
+    const queue = useQueue(interaction.guild!.id);
     if (!queue) return;
 
-    const loopMode = message.content.split(/\s+/)[1];
+    const loopMode = interaction.options.getString("type")!;
 
     switch (loopMode) {
       case "none":
@@ -29,15 +40,11 @@ const command: Command = {
         console.log("Setting loop to", loopMode);
         queue.setRepeatMode(QueueRepeatMode.QUEUE);
         break;
-      default:
-        if (message.channel.isSendable()) {
-          message.channel.send(
-            "Loop mode must be one of <none | track | queue>"
-          );
-        }
-        break;
     }
-  }
-};
 
-export default command;
+    await interaction.reply({
+      content: `Loop mode set to ${loopMode}.`,
+      ephemeral: true
+    });
+  }
+} as Command;

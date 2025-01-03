@@ -1,12 +1,18 @@
-import { Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
+  SlashCommandSubcommandBuilder,
+  SlashCommandSubcommandGroupBuilder,
+  SlashCommandSubcommandsOnlyBuilder
+} from "discord.js";
 
 export interface Command {
-  name: string;
-  description: string;
-  usage: string;
-  run(message: Message, additionalArgs?: Args): Promise<void>;
-}
-
-export interface Args {
-  top?: boolean;
+  data:
+    | SlashCommandBuilder
+    | SlashCommandSubcommandBuilder
+    | SlashCommandOptionsOnlyBuilder
+    | SlashCommandSubcommandsOnlyBuilder
+    | SlashCommandSubcommandGroupBuilder;
+  run(interaction: ChatInputCommandInteraction): Promise<void>;
 }

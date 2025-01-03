@@ -1,5 +1,4 @@
-import { Args, Command } from "@models/command.model";
-import config from "@utils/config";
+import { Command } from "@models/command.model";
 import { checkForVoice, findBestMatch } from "@utils/utils";
 import {
   QueryType,
@@ -9,25 +8,67 @@ import {
   useMainPlayer,
   useQueue
 } from "discord-player";
-import { Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  GuildMember,
+  SlashCommandBuilder
+} from "discord.js";
 import fs from "fs";
 import path from "path";
 
-// @TODO: Refactor this to not have the additionalArgs parameter. Also possibly separate the file search into a new command.
+// @TODO: Break functions up.
+// @TODO: Possibly separate the file search into a new command.
+// @TODO: Fix searching queries (only get first result).
 const command: Command = {
-  name: "play",
-  description: `Search for a song to play or use a url. Optionally specify the search engine. Supports "youtube", "spotify", "soundcloud", and "file" for uploaded files.`,
-  usage: `${config.prefix}play <url or search term> $<search engine>`,
-  async run(message: Message, additionalArgs: Args) {
-    if (!checkForVoice(message)) return;
+  data: new SlashCommandBuilder()
+    .setName("play")
+    .setDescription("Play a song or an uploaded file.")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("song")
+        .setDescription("Play a song.")
+        .addStringOption((option) =>
+          option
+            .setName("search")
+            .setDescription("Search query or url.")
+            .setRequired(true)
+        )
+        .addBooleanOption((option) =>
+          option.setName("top").setDescription("Add to the front of the queue.")
+        )
+        .addStringOption((option) =>
+          option
+            .setName("engine")
+            .setDescription("Place to search from. Defaults to auto.")
+            .addChoices(
+              { name: "youtube", value: "youtube" },
+              { name: "spotify", value: "spotify" },
+              { name: "soundcloud", value: "soundcloud" }
+            )
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("file")
+        .setDescription("Play an uploaded file.")
+        .addStringOption((option) =>
+          option
+            .setName("search")
+            .setDescription("File name.")
+            .setRequired(true)
+        )
+    ),
+  async run(interaction: ChatInputCommandInteraction) {
+    if (!checkForVoice(interaction)) return;
 
-    const args = message.content.split("$");
-    const engine = args[1]
-      ? (findBestMatch(args[1], Object.values(QueryType)) as SearchQueryType)
-      : "auto";
-    let query = args[0].split(/\s+/).slice(1).join(" ");
+    await interaction.deferReply({ ephemeral: true });
 
-    if (engine === QueryType.FILE) {
+    let query = interaction.options.getString("search")!;
+    let engine =
+      (interaction.options.getString("engine") as SearchQueryType) ?? "auto";
+
+    if (interaction.options.getSubcommand() === "file") {
+      engine = QueryType.FILE;
       const files: string[] = [];
       const paths: string[] = [];
       const getFilesRecursively = (directory: string) => {
@@ -44,12 +85,14 @@ const command: Command = {
       };
 
       getFilesRecursively(path.join(__dirname, "..", "..", "uploads"));
+
       const file = findBestMatch(query, files);
       if (!file) {
-        console.log("No results found");
-        if (message.channel.isSendable()) {
-          message.channel.send("No results found");
-        }
+        interaction.reply({
+          content: "No results found",
+          ephemeral: true
+        });
+
         return;
       }
 
@@ -60,18 +103,20 @@ const command: Command = {
     const search = await player.search(query, {
       searchEngine: engine
     });
+
     if (search.isEmpty()) {
-      if (message.channel.isSendable()) {
-        message.channel.send("No results found");
-      }
+      interaction.reply({
+        content: "No results found",
+        ephemeral: true
+      });
 
       return;
     }
 
     const result = parseSearchResult(search, query);
 
-    const queue = useQueue(message.guild!.id);
-    if (queue?.node.isPlaying() && additionalArgs?.top) {
+    const queue = useQueue(interaction.guild!.id);
+    if (queue?.node.isPlaying() && interaction.options.getBoolean("top")) {
       if (result instanceof SearchResult) {
         result.tracks.forEach((track) => {
           queue?.insertTrack(track, 0);
@@ -80,19 +125,25 @@ const command: Command = {
         queue?.insertTrack(result, 0);
       }
 
+      await interaction.deleteReply();
+
       return;
     }
 
-    // @TODO: Remove this.
-    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-    await player.play(message.member?.voice.channel!, result, {
-      nodeOptions: {
-        volume: 15
-      },
-      connectionOptions: {
-        deaf: false
+    await player.play(
+      (interaction.member as GuildMember).voice.channel!,
+      result,
+      {
+        nodeOptions: {
+          volume: 15
+        },
+        connectionOptions: {
+          deaf: false
+        }
       }
-    });
+    );
+
+    await interaction.deleteReply();
   }
 };
 
