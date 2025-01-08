@@ -49,6 +49,9 @@ export default {
             .setDescription("File name.")
             .setRequired(true)
         )
+        .addBooleanOption((option) =>
+          option.setName("top").setDescription("Add to the front of the queue.")
+        )
     ),
   async run(interaction: ChatInputCommandInteraction) {
     if (!checkForVoice(interaction)) return;
