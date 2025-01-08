@@ -9,6 +9,7 @@ import {
   useQueue
 } from "discord-player";
 import {
+  AutocompleteInteraction,
   ChatInputCommandInteraction,
   GuildMember,
   SlashCommandBuilder
@@ -19,7 +20,7 @@ import path from "path";
 // @TODO: Break functions up.
 // @TODO: Possibly separate the file search into a new command.
 // @TODO: Fix searching queries (only get first result).
-const command: Command = {
+export default {
   data: new SlashCommandBuilder()
     .setName("play")
     .setDescription("Play a song or an uploaded file.")
@@ -32,6 +33,7 @@ const command: Command = {
             .setName("search")
             .setDescription("Search query or url.")
             .setRequired(true)
+            .setAutocomplete(true)
         )
         .addBooleanOption((option) =>
           option.setName("top").setDescription("Add to the front of the queue.")
@@ -144,8 +146,42 @@ const command: Command = {
     );
 
     await interaction.deleteReply();
+  },
+  async autocomplete(interaction: AutocompleteInteraction) {
+    const query = interaction.options.getString("search");
+    if (!query) {
+      await interaction.respond([]);
+      return;
+    }
+
+    const player = useMainPlayer();
+    const search = await player.search(query);
+
+    if (search.hasPlaylist()) {
+      await interaction.respond([
+        {
+          name: `${search.playlist!.title} - ${search.playlist!.author.name}`,
+          value: search.playlist!.url
+        }
+      ]);
+
+      return;
+    } else if (search.hasTracks()) {
+      await interaction.respond(
+        search.tracks
+          .splice(0, Math.min(7, search.tracks.length))
+          .map((choice) => ({
+            name: `${choice.title} - ${choice.author} - ${choice.duration}`,
+            value: choice.url
+          }))
+      );
+
+      return;
+    }
+
+    await interaction.respond([]);
   }
-};
+} as Command;
 
 /**
  * Checks if the query string is a single track in a Youtube playlist (defined by the index parameter).
@@ -166,5 +202,3 @@ function parseSearchResult(
 
   return search;
 }
-
-export default command;
