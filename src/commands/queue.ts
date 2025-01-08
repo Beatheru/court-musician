@@ -34,6 +34,9 @@ export default {
         interaction.channel.send({ embeds: [embed] });
       }
 
+      await interaction.deferReply({ ephemeral: true });
+      await interaction.deleteReply();
+
       return;
     }
 
@@ -58,5 +61,8 @@ export default {
     if (interaction.channel?.isSendable()) {
       interaction.channel.send({ embeds: [embed] });
     }
+
+    await interaction.deferReply({ ephemeral: true });
+    await interaction.deleteReply();
   }
 } as Command;
