@@ -38,16 +38,6 @@ export default {
         .addBooleanOption((option) =>
           option.setName("top").setDescription("Add to the front of the queue.")
         )
-        .addStringOption((option) =>
-          option
-            .setName("engine")
-            .setDescription("Place to search from. Defaults to auto.")
-            .addChoices(
-              { name: "youtube", value: "youtube" },
-              { name: "spotify", value: "spotify" },
-              { name: "soundcloud", value: "soundcloud" }
-            )
-        )
     )
     .addSubcommand((subcommand) =>
       subcommand
@@ -66,8 +56,7 @@ export default {
     await interaction.deferReply({ ephemeral: true });
 
     let query = interaction.options.getString("search")!;
-    let engine =
-      (interaction.options.getString("engine") as SearchQueryType) ?? "auto";
+    let engine: SearchQueryType = QueryType.AUTO;
 
     if (interaction.options.getSubcommand() === "file") {
       engine = QueryType.FILE;
