@@ -46,5 +46,7 @@ The following information is available as part of Discord's slash commands as we
 - **/shuffle**: Shuffles the queue.
 - **/upload**: Uploads a media file that then gets downloaded on the server. Playback of this file can be done usng the `/play file` command.
 - **/loop**: Makes the bot loop the current song or the whole queue.
+- **/move**: Moves a song's position in the queue.
+- **/swap**: Swaps the positions of two songs in the queue.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
