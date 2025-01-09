@@ -43,19 +43,19 @@ export default {
     if (tracks.length > 15) {
       for (let i = 0; i < 15; i++) {
         embed.addFields({
-          name: `${tracks[i].title} - ${tracks[i].duration}`,
+          name: `${i + 1}. ${tracks[i].title} - ${tracks[i].duration}`,
           value: `${tracks[i].url}`,
           inline: false
         });
       }
     } else {
-      for (const track of tracks) {
+      tracks.forEach((track, i) => {
         embed.addFields({
-          name: `${track.title} - ${track.duration}`,
+          name: `${i + 1}. ${track.title} - ${track.duration}`,
           value: `${track.url}`,
           inline: false
         });
-      }
+      });
     }
 
     if (interaction.channel?.isSendable()) {
