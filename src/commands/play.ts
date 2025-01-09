@@ -17,9 +17,6 @@ import {
 import fs from "fs";
 import path from "path";
 
-// @TODO: Break functions up.
-// @TODO: Possibly separate the file search into a new command.
-// @TODO: Fix searching queries (only get first result).
 export default {
   data: new SlashCommandBuilder()
     .setName("play")
@@ -48,6 +45,7 @@ export default {
             .setName("search")
             .setDescription("File name.")
             .setRequired(true)
+            .setAutocomplete(true)
         )
         .addBooleanOption((option) =>
           option.setName("top").setDescription("Add to the front of the queue.")
@@ -58,40 +56,7 @@ export default {
 
     await interaction.deferReply({ ephemeral: true });
 
-    let query = interaction.options.getString("search")!;
-    let engine: SearchQueryType = QueryType.AUTO;
-
-    if (interaction.options.getSubcommand() === "file") {
-      engine = QueryType.FILE;
-      const files: string[] = [];
-      const paths: string[] = [];
-      const getFilesRecursively = (directory: string) => {
-        const filesInDirectory = fs.readdirSync(directory);
-        for (const file of filesInDirectory) {
-          const absolute = path.join(directory, file);
-          if (fs.statSync(absolute).isDirectory()) {
-            getFilesRecursively(absolute);
-          } else {
-            files.push(file);
-            paths.push(absolute);
-          }
-        }
-      };
-
-      getFilesRecursively(path.join(__dirname, "..", "..", "uploads"));
-
-      const file = findBestMatch(query, files);
-      if (!file) {
-        interaction.reply({
-          content: "No results found",
-          ephemeral: true
-        });
-
-        return;
-      }
-
-      query = path.join(__dirname, "..", "..", "uploads", file);
-    }
+    const { query, engine } = parseQuery(interaction);
 
     const player = useMainPlayer();
     const search = await player.search(query, {
@@ -99,7 +64,7 @@ export default {
     });
 
     if (search.isEmpty()) {
-      interaction.reply({
+      await interaction.reply({
         content: "No results found",
         ephemeral: true
       });
@@ -146,34 +111,100 @@ export default {
       return;
     }
 
-    const player = useMainPlayer();
-    const search = await player.search(query);
-
-    if (search.hasPlaylist()) {
-      await interaction.respond([
-        {
-          name: `${search.playlist!.title} - ${search.playlist!.author.name}`,
-          value: search.playlist!.url
-        }
-      ]);
-
-      return;
-    } else if (search.hasTracks()) {
-      await interaction.respond(
-        search.tracks
-          .splice(0, Math.min(7, search.tracks.length))
-          .map((choice) => ({
-            name: `${choice.title} - ${choice.author} - ${choice.duration}`,
-            value: choice.url
-          }))
+    if (interaction.options.getSubcommand() === "file") {
+      const files: string[] = getFilesRecursively(
+        path.join(__dirname, "..", "..", "uploads")
       );
 
-      return;
-    }
+      await interaction.respond(
+        files
+          .filter((file) => file.toLowerCase().includes(query.toLowerCase()))
+          .splice(0, Math.min(7, files.length))
+          .map((choice) => ({
+            name: choice,
+            value: choice
+          }))
+      );
+    } else {
+      const player = useMainPlayer();
+      const search = await player.search(query);
 
-    await interaction.respond([]);
+      if (search.hasPlaylist()) {
+        await interaction.respond([
+          {
+            name: `${search.playlist!.title} - ${search.playlist!.author.name}`,
+            value: search.playlist!.url
+          }
+        ]);
+
+        return;
+      } else if (search.hasTracks()) {
+        await interaction.respond(
+          search.tracks
+            .splice(0, Math.min(7, search.tracks.length))
+            .map((choice) => ({
+              name: `${choice.title} - ${choice.author} - ${choice.duration}`,
+              value: choice.url
+            }))
+        );
+
+        return;
+      }
+
+      await interaction.respond([]);
+    }
   }
 } as Command;
+
+/**
+ * Helper function to get the
+ * @param interaction
+ * @returns
+ */
+function parseQuery(interaction: ChatInputCommandInteraction): {
+  query: string;
+  engine: SearchQueryType;
+} {
+  const query = interaction.options.getString("search")!;
+
+  if (interaction.options.getSubcommand() === "file") {
+    const files: string[] = getFilesRecursively(
+      path.join(__dirname, "..", "..", "uploads")
+    );
+
+    const file = findBestMatch(query, files);
+
+    return {
+      query: path.join(__dirname, "..", "..", "uploads", file),
+      engine: QueryType.FILE
+    };
+  }
+
+  return {
+    query,
+    engine: QueryType.AUTO
+  };
+}
+
+/**
+ * Recursively goes through a directory and returns all the files in it.
+ * @param root Top level directory to search.
+ */
+function getFilesRecursively(root: string): string[] {
+  const files: string[] = [];
+  const filesInDirectory = fs.readdirSync(root);
+
+  for (const file of filesInDirectory) {
+    const absolute = path.join(root, file);
+    if (fs.statSync(absolute).isDirectory()) {
+      files.push(...getFilesRecursively(absolute));
+    } else {
+      files.push(absolute);
+    }
+  }
+
+  return files;
+}
 
 /**
  * Checks if the query string is a single track in a Youtube playlist (defined by the index parameter).
