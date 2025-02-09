@@ -198,7 +198,7 @@ function getFilesRecursively(root: string): string[] {
     if (fs.statSync(absolute).isDirectory()) {
       files.push(...getFilesRecursively(absolute));
     } else {
-      files.push(absolute);
+      files.push(file);
     }
   }
 
