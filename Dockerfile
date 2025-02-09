@@ -7,7 +7,8 @@ RUN apt update && apt install ffmpeg -y
 # Install pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+
+RUN npm i -g corepack
 
 # Install pm2
 RUN pnpm install -g pm2
