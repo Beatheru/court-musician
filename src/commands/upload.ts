@@ -4,7 +4,7 @@ import download from "download";
 import fs from "fs";
 import path from "path";
 
-const extensions = [".mp3", "mp4", ".webm", ".ogg"];
+const extensions = [".mp3", "mp4", ".webm", ".ogg", ".wav"];
 
 /**
  * Checks if the file extension is one of the accepted extensions.
@@ -33,20 +33,27 @@ export default {
     const file = interaction.options.getAttachment("file")!;
 
     if (!checkFileType(file.name)) {
+      console.log(`File type unsupported: ${file.name}`);
+      await interaction.deleteReply();
       return;
     }
 
     await interaction.deferReply({ ephemeral: true });
 
-    const filePath = path.join(__dirname, "..", "..", "uploads");
-    if (fs.existsSync(path.join(filePath, file.name))) {
+    const uploadPath = path.join(__dirname, "..", "..", "uploads");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+
+    if (fs.existsSync(path.join(uploadPath, file.name))) {
       console.log("File exists");
       await interaction.editReply("File already exists.");
 
       return;
     }
 
-    await download(file.url, filePath);
+    console.log(`Downloading file: ${file.url}`);
+    await download(file.url, uploadPath);
     console.log("Download complete");
     await interaction.editReply("File uploaded successfully.");
   }
