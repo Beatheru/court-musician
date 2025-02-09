@@ -2,3 +2,5 @@ services:
   bot:
     build: .
     container_name: court-musician
+    volumes:
+      - ./uploads:/app/uploads
