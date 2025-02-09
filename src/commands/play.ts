@@ -64,9 +64,8 @@ export default {
     });
 
     if (search.isEmpty()) {
-      await interaction.reply({
-        content: "No results found",
-        ephemeral: true
+      await interaction.editReply({
+        content: "No results found"
       });
 
       return;
