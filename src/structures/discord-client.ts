@@ -2,7 +2,6 @@ import { DefaultExtractors } from "@discord-player/extractor";
 import { Command } from "@models/command.model";
 import config from "@utils/config";
 import { Player } from "discord-player";
-import { YoutubeiExtractor } from "discord-player-youtubei";
 import {
   Client,
   ClientOptions,
@@ -28,7 +27,6 @@ export class DiscordClient extends Client {
 
     // Creates new discord-player instance.
     const player = new Player(this);
-    player.extractors.register(YoutubeiExtractor, {});
     player.extractors.loadMulti(DefaultExtractors);
 
     // Register commands and events.
